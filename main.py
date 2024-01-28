@@ -13,7 +13,20 @@ async def send_start(message):
 
 @bot.message_handler(func=lambda message: True)
 async def send_any(message):
-    await bot.reply_to(message, 'Гойда')
+    print(message)
+    await bot.send_message(message.chat.id, 'Гойда')
+    
+
+@bot.message_handler(content_types=['new_chat_members'])
+async def send_welcome_message(message):
+    print(message)
+    await bot.send_message(message.chat.id, 'НОВАЯ ГОЙДА')
+    
+    
+@bot.message_handler(content_types=['left_chat_member'])
+async def send_fuck_off_message(message):
+    print(message)
+    await bot.send_message(message.chat.id, 'Без тебя нам будет лучше.')
     
     
 import asyncio
