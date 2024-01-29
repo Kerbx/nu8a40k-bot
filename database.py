@@ -7,6 +7,7 @@ db = peewee.SqliteDatabase('users.db')
 class User(peewee.Model):
     id = peewee.CharField()
     name = peewee.CharField()
+    username = peewee.CharField()
     rank = peewee.IntegerField()
     exp = peewee.IntegerField()
     admin = peewee.BooleanField()
