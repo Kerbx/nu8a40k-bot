@@ -1,4 +1,5 @@
 import config
+import database
 
 import telebot.async_telebot
 
@@ -11,6 +12,33 @@ async def send_start(message):
     await bot.reply_to(message, 'Приветствую.')
     
 
+@bot.message_handler(commands=['register'])
+async def register_user(message):
+    for user in database.User.select():
+        if user.id == message.from_user.id:
+            return
+    
+    admins = await bot.get_chat_administrators(message.chat.id)
+    
+    for admin in admins:
+        if admin.user.id == message.from_user.id:
+            USER_IS_ADMIN = True
+            USER_RANK = -1
+            USER_EXP = 20000
+        else:
+            USER_IS_ADMIN = False
+            USER_RANK = 0
+            USER_EXP = 0
+            
+    USER_ID = message.from_user.id
+    USER_NAME = message.from_user.first_name
+    USER_WARNS = 0
+    USER_STATE = 0
+    
+    user = database.User(id=USER_ID, name=USER_NAME, rank=USER_RANK, admin=USER_IS_ADMIN, exp=USER_EXP, warns=USER_WARNS, state=USER_STATE)
+    user.save()
+    
+    
 @bot.message_handler(func=lambda message: True)
 async def send_any(message):
     print(message)
