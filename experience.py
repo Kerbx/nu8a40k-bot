@@ -30,7 +30,7 @@ def change_user_experience(user_id, amount):
         print(e)
     
     
-def print_progress_bar(iteration, total, prefix = '', suffix = '', decimals = 0, length = 25, fill = '█', printEnd = "\r"):
+def print_progress_bar(iteration, total, prefix = '', suffix = '', decimals = 0, length = 15, fill = 'o', printEnd = "\r"):
     """
     Call in a loop to create terminal progress bar
     @params:
