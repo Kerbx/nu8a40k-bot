@@ -13,15 +13,15 @@ database.db.connect()
 
 
 async def get_message_reply_id(message):
-    id = ''
+    _id = ''
     if message.reply_to_message:
-        id = message.reply_to_message.from_user.id
+        _id = message.reply_to_message.from_user.id
         if message.reply_to_message.from_user.is_bot:
             await bot.send_message(message.chat.id,
                                    "_Боты не могут зарегистрироваться, о них нельзя получить информацию\!_",
                                    "MarkdownV2")
             return None
-        return id
+        return _id
 
 
 @bot.message_handler(commands=['start'])
@@ -37,6 +37,16 @@ async def register_user(message):
 
     admins = await bot.get_chat_administrators(message.chat.id)
 
+    user_id = message.from_user.id
+    user_name = message.from_user.first_name
+    user_username = message.from_user.username
+    user_warns = 0
+    user_state = 0
+
+    user_is_admin = False
+    user_rank = 0
+    user_exp = 0
+
     for admin in admins:
         if admin.user.id == message.from_user.id:
             user_is_admin = True
@@ -47,11 +57,6 @@ async def register_user(message):
             user_rank = 0
             user_exp = 0
 
-    user_id = message.from_user.id
-    user_name = message.from_user.first_name
-    user_username = message.from_user.username
-    user_warns = 0
-    user_state = 0
     try:
         database.User.create(id=str(user_id),
                              name=str(user_name),
@@ -78,18 +83,18 @@ async def get_user_info(message):
 
     # If message is a reply then we grab a user's id in reply to manage user.
     # Also send message if user is bot.
-    id = await get_message_reply_id(message)
+    _id = await get_message_reply_id(message)
 
     # Grab user's id or id of user in reply and show info about him.
-    if str(message.from_user.id if not id else id) in users:
-        user = database.User.select().where(database.User.id == str(message.from_user.id if not id else id)).get()
+    if str(message.from_user.id if not _id else _id) in users:
+        user = database.User.select().where(database.User.id == str(message.from_user.id if not _id else _id)).get()
         info = f"""
         Имя: {user.name}
         Статус: {globals.USER_STATES.get(user.state)}
         Ранг: {globals.USER_RANKS.get(user.rank)}
-        Текущее количество опыта: {user.exp}
+        Текущее количество опыта: {user.exp if not user.admin else '∞'}
         Прогресс опыта до следующего уровня:
-        {experience.print_progress_bar(user.exp, experience.amount_of_exp_to_next_rank(user.rank))}
+        {experience.print_progress_bar(user, user.exp, experience.amount_of_exp_to_next_rank(user.rank))}
         """
         await bot.send_message(message.chat.id, f'Информация о пользователе:\n{info}')
     else:
@@ -110,21 +115,20 @@ async def give_experience(message):
         if '@' in message.text:
             usernames = regex.findall(r'@\w+', message.text)
             amount = regex.findall(r'-?\d+', message.text)
-            print(amount)
             for username in usernames:
                 _user = database.User.select().where(database.User.username == username[1:]).get()
                 experience.change_user_experience(_user.id, int(amount[0]))
                 return
         else:
-            id = await get_message_reply_id(message)
+            _id = await get_message_reply_id(message)
             users = []
             for _user in database.User.select():
                 users.append(_user.id)
 
-            if str(message.from_user.id if not id else id) in users:
-                _user = database.User.select().where(database.User.id == message.from_user.id if not id else id).get()
+            if str(_id) in users:
+                _user = database.User.select().where(database.User.id == _id).get()
                 amount = regex.findall(r'-?\d+', message.text)
-                experience.change_user_experience(message.from_user.id if not id else id, int(amount[0]))
+                experience.change_user_experience(_id, int(amount[0]))
             else:
                 await bot.reply_to(message, 'Пользователь не зарегистрирован.')
 
